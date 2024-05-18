@@ -10,9 +10,10 @@ def evaluate(Node):
 # Node class that represents a single problem state
 class Node:
 
-    def __init__(self, features = [], accuracy = 0):
+    def __init__(self, features = [], accuracy = 0.0, newestFet = 0):
         self.features = features
         self.accuracy = accuracy
+        self.newestFet = newestFet # keeps track of most recent change in the state
 
     def __lt__(self, node): # sorting function for priority queue
         return (self.accuracy) < (node.accuracy)
@@ -33,10 +34,22 @@ class Problem:
                 newFeatures = copy.copy(curr.features)
                 newFeatures.append(i)
 
-                temp = Node(newFeatures)
+                temp = Node(newFeatures, 0, i)
                 temp.accuracy = evaluate(temp)
 
                 frontier.append(temp)
+
+        elif (self.algorithm == 2): # Backward Elimination
+            for i in self.fetList:
+                print(i, self.fetList, curr.features)
+                newFeatures = copy.copy(curr.features)
+                newFeatures.remove(i)
+
+                temp = Node(newFeatures, 0, i)
+                temp.accuracy = evaluate(temp)
+
+                frontier.append(temp)
+            
         
         return frontier
 
@@ -51,10 +64,11 @@ def main():
     totalFeatures = int(input("Welcome to Harrison Cooper Feature Selection Algorithm.\nPlease enter total number of features: "))
     algNum = int(input("Type the number of the algorithm you want to run.\n\n\tForward Selection\n\tBackward Elimination\n\tHarrison's Special Algorithm.\n"))
 
-    
-    q = PriorityQueue(maxsize = 90000)
-
     curr = Node([], 1 / totalFeatures)
+    if (algNum == 2):
+        for i in range(1, totalFeatures+1):
+            curr.features.append(i)
+
     problem = Problem(totalFeatures, algNum)
     frontier = problem.createFrontier(curr)
 
@@ -70,7 +84,8 @@ def main():
         for i in frontier:
             if (i.accuracy > curr.accuracy):
                 curr = i
-        problem.fetList.remove(curr.features[-1]) # remove the chosen feature from featureList
+
+        problem.fetList.remove(curr.newestFet) # remove the chosen feature from featureList
 
         print("\nFeature set", curr.features, "was best, accuracy is", curr.accuracy, "%")
 
