@@ -24,7 +24,7 @@ class Problem:
         self.featureCnt = featureCnt
         self.algorithm = algorithm
         self.fetList = set()
-        for i in range(1, featureCnt+1): # may use set because lookup is much faster than a list
+        for i in range(1, featureCnt+1): # using set because lookup is much faster than a list
             self.fetList.add(i)
 
     def createFrontier(self, curr): # creates the frontier from curr state and new features
@@ -41,7 +41,6 @@ class Problem:
 
         elif (self.algorithm == 2): # Backward Elimination
             for i in self.fetList:
-                print(i, self.fetList, curr.features)
                 newFeatures = copy.copy(curr.features)
                 newFeatures.remove(i)
 
@@ -49,33 +48,34 @@ class Problem:
                 temp.accuracy = evaluate(temp)
 
                 frontier.append(temp)
-            
         
         return frontier
 
 def printFrontier(frontier): # helper function for output
     for i in frontier:
-        print("\n\tUsing feature(s)", i.features, end = " ")
+        print("\tUsing feature(s)", i.features, end = " ")
         print ("accuracy is", i.accuracy, "%")
 
 
 def main():
-    
     totalFeatures = int(input("Welcome to Harrison Cooper Feature Selection Algorithm.\nPlease enter total number of features: "))
     algNum = int(input("Type the number of the algorithm you want to run.\n\n\tForward Selection\n\tBackward Elimination\n\tHarrison's Special Algorithm.\n"))
 
-    curr = Node([], 1 / totalFeatures)
+    curr = Node([], 1 / totalFeatures) # initalize the starting node
+    curr.accuracy = evaluate(curr)
+
     if (algNum == 2):
         for i in range(1, totalFeatures+1):
             curr.features.append(i)
+        print("\nUsing features", curr.features, "and a \"random\" evaluation, I get an accuracy of", curr.accuracy, '%')
+    else: print("\nUsing no features and a \"random\" evaluation, I get an accuracy of", curr.accuracy, '%')
 
-    problem = Problem(totalFeatures, algNum)
+    problem = Problem(totalFeatures, algNum) # initalize the problem with input
     frontier = problem.createFrontier(curr)
 
-    print("initial frontier:")
+    print("\nBeginning Search\n")
     printFrontier(frontier)
 
-    print("\nBeginning search.")
     allTimeBest = Node()
 
     while (problem.fetList): # loop while there are still new features to add
@@ -87,19 +87,16 @@ def main():
 
         problem.fetList.remove(curr.newestFet) # remove the chosen feature from featureList
 
-        print("\nFeature set", curr.features, "was best, accuracy is", curr.accuracy, "%")
+        print("\nFeature set", curr.features, "was best, accuracy is", curr.accuracy, "%\n")
 
         if (curr.accuracy < allTimeBest.accuracy):
-            print("\n(Warning, Accuracy has decreased!)")
+            print("(Warning, Accuracy has decreased!)")
         else: 
             allTimeBest = curr
 
         frontier = problem.createFrontier(curr)
         printFrontier(frontier)
 
-    print("Finished search!! The best feature subset is", allTimeBest.features, ", which has an accuracy of", allTimeBest.accuracy, "%")
+    print("Finished search!! The best feature subset is", allTimeBest.features, "which has an accuracy of", allTimeBest.accuracy, "%")
         
-
-
-if __name__=="__main__": 
-    main()
+main() # call main function
