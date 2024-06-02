@@ -8,7 +8,7 @@ class Classifier:
     def __init__(self):
         self = self 
 
-    def train(self, filename = "small-test-dataset.txt"): 
+    def train(self, filename): 
         print("\nStarting training")
         startTime = time.perf_counter()
         
@@ -108,7 +108,7 @@ class Classifier:
     
 
 class Validator:
-    def __init__(self, dataset = "small-test-dataset.txt"):
+    def __init__(self, dataset):
         self.classifier = Classifier()
         self.classifier.train(dataset)
         self.classifier.normalize()
@@ -147,4 +147,4 @@ def test():
 
     print("Accuracy for these features is", v.evaluate(features))
 
-test()
+# test()

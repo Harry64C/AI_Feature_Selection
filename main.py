@@ -2,9 +2,11 @@ from queue import PriorityQueue
 import copy
 import random
 
-def evaluate(Node):
-    offset = float(random.randint(0, 9)) / 10
-    return random.randint(0, 100) + offset
+import Validator as V # import my validator file
+
+# def evaluate(Node):
+#     offset = float(random.randint(0, 9)) / 10
+#     return random.randint(0, 100) + offset
 
 
 # Node class that represents a single problem state
@@ -27,6 +29,13 @@ class Problem:
         for i in range(1, featureCnt+1): # using set because lookup is much faster than a list
             self.fetList.add(i)
 
+        filename = input("Enter the filename of the dataset you would like to use or press enter for the default: ")
+        if (len(filename) < 10): 
+            filename = "Datasets/small-test-dataset.txt"
+
+        print("Using", filename)
+        self.validator = V.Validator(filename)
+
     def createFrontier(self, curr): # creates the frontier from curr state and new features
         frontier = []
         if (self.algorithm == 1): # Forward Selection
@@ -35,7 +44,7 @@ class Problem:
                 newFeatures.append(i)
 
                 temp = Node(newFeatures, 0, i)
-                temp.accuracy = evaluate(temp)
+                temp.accuracy = self.validator.evaluate(newFeatures)
 
                 frontier.append(temp)
 
@@ -45,7 +54,7 @@ class Problem:
                 newFeatures.remove(i)
 
                 temp = Node(newFeatures, 0, i)
-                temp.accuracy = evaluate(temp)
+                temp.accuracy = self.validator.evaluate(newFeatures)
 
                 frontier.append(temp)
         
@@ -62,7 +71,7 @@ def main():
     algNum = int(input("Type the number of the algorithm you want to run.\n\n\tForward Selection\n\tBackward Elimination\n\tHarrison's Special Algorithm.\n"))
 
     curr = Node([], 1 / totalFeatures) # initalize the starting node
-    curr.accuracy = evaluate(curr)
+    #curr.accuracy = evaluate(curr)
 
     if (algNum == 2):
         for i in range(1, totalFeatures+1):
