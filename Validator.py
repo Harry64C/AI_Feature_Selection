@@ -23,19 +23,21 @@ class Classifier:
             col = 0
             
             row = row.split('\n')
-            row = row[0].split('  ')
-            row.remove('')
+            row = row[0].split()
+            for i in row:
+                i.strip()
+
+            #print(row)
 
             instance = [int(row[0][0])] # get the instance class
 
             for i in row[1:]: 
-                for j in i.split(): # takes care of any whitespace that got through
-                    instance.append(float(j)) # python float() converts IEEE to double automatically
+                instance.append(float(i)) # python float() converts IEEE to double automatically
 
-                    dataCol = self.cols.get(col, []) # also insert data in columns for later normalization
-                    dataCol.append(float(j))
-                    self.cols[col] = dataCol
-                    col += 1
+                dataCol = self.cols.get(col, []) # also insert data in columns for later normalization
+                dataCol.append(float(i))
+                self.cols[col] = dataCol
+                col += 1
 
             self.dataVals[instanceIdx] = instance
             instanceIdx += 1
@@ -59,10 +61,8 @@ class Classifier:
             row = self.dataVals[i][1:]
 
             for j in range(0, len(row)):
-                #print("row", j, "was", row[j])
                 self.dataVals[i][j+1] = (row[j] - mean[j]) / std[j]
 
-        #print(self.dataVals)
         print("Data normalization took", time.perf_counter() - startTime, "seconds!\n")
 
 
@@ -98,7 +98,6 @@ class Classifier:
             eucDist = distance.euclidean(row, instance) 
 
             if eucDist < closest[0]:
-                #print("new closest upon", row)
                 closest[0] = eucDist
                 closest[1] = self.dataVals[i][0]
 
@@ -106,12 +105,41 @@ class Classifier:
         
         return closest[1]
     
+    def prune(self):
+        print("Starting data pruning")
+        startTime = time.perf_counter()
+        n = len(self.dataVals)
+
+        minDist = {} # min ecu distance from each instance to instance of another class
+        for i in range(0, n):
+            for j in range(i+1, n):
+                
+                if (self.dataVals[i][0] != self.dataVals[j][0]): # different classes
+                    instance1 = self.dataVals[i][1:]
+                    instance2 = self.dataVals[j][1:]
+
+                    eucDist = distance.euclidean(instance1, instance2) 
+                    minDist[i] = min(eucDist, minDist.get(i, float('inf')))
+
+        minDist = dict(sorted(minDist.items(), key=lambda x: x[1]))
+        pruneAmount = len(self.dataVals) // 2 # prune 2/3 of data points that are most useless
+        
+        smallerData = {}
+        keys = list(minDist.keys())
+
+        for i in range(0, pruneAmount):
+            smallerData[i] = self.dataVals[keys[i]]
+
+        self.dataVals = smallerData # replace dataVals with pruned data
+        print("Pruning took", time.perf_counter() - startTime, "seconds!\n")
+    
 
 class Validator:
     def __init__(self, dataset):
         self.classifier = Classifier()
         self.classifier.train(dataset)
         self.classifier.normalize()
+        self.classifier.prune()
 
     def evaluate(self, features = []):
         print("Starting accuracy evaluation for feature set", features)
@@ -127,7 +155,8 @@ class Validator:
                 misses += 1
 
         print("Accuracy evaluation took", time.perf_counter() - startTime, "seconds!\n")
-        return hits / (hits + misses)
+        accuracy = hits / (hits + misses)
+        return round(accuracy, 3)
         
 
 
@@ -142,8 +171,8 @@ def test():
         features.append(int(i))
 
     filename = input("Enter the filename of the dataset you would like to use: ")
-    # large-test-dataset.txt
-    v = Validator(filename)
+    # v = Validator(filename)
+    v = Validator("Datasets/large-test-dataset.txt")
 
     print("Accuracy for these features is", v.evaluate(features))
 

@@ -1,12 +1,7 @@
 from queue import PriorityQueue
 import copy
-import random
 
 import Validator as V # import my validator file
-
-# def evaluate(Node):
-#     offset = float(random.randint(0, 9)) / 10
-#     return random.randint(0, 100) + offset
 
 
 # Node class that represents a single problem state
@@ -31,7 +26,9 @@ class Problem:
 
         filename = input("Enter the filename of the dataset you would like to use or press enter for the default: ")
         if (len(filename) < 10): 
+            #filename = "Datasets/CS170_Spring_2024_Large_data__19.txt"
             filename = "Datasets/small-test-dataset.txt"
+            # Datasets/CS170_Spring_2024_Large_data__19.txt
 
         print("Using", filename)
         self.validator = V.Validator(filename)
@@ -71,7 +68,6 @@ def main():
     algNum = int(input("Type the number of the algorithm you want to run.\n\n\tForward Selection\n\tBackward Elimination\n\tHarrison's Special Algorithm.\n"))
 
     curr = Node([], 1 / totalFeatures) # initalize the starting node
-    #curr.accuracy = evaluate(curr)
 
     if (algNum == 2):
         for i in range(1, totalFeatures+1):
