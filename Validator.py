@@ -9,9 +9,7 @@ class Classifier:
         self = self 
 
     def train(self, filename): 
-        print("\nStarting training")
-        startTime = time.perf_counter()
-        
+
         self.dataVals = {} # dictionary that will hold the data
         self.cols = {}
 
@@ -27,8 +25,6 @@ class Classifier:
             for i in row:
                 i.strip()
 
-            #print(row)
-
             instance = [int(row[0][0])] # get the instance class
 
             for i in row[1:]: 
@@ -43,12 +39,13 @@ class Classifier:
             instanceIdx += 1
 
         file.close()
-        print("Training took", time.perf_counter() - startTime, "seconds!\n")
+        n = (len(self.dataVals[0])-1)
+        print("this dataset has", n, "features (not including the class attribute), with", (n * len(self.dataVals)), "instances.")
+
 
 
     def normalize(self):
-        print("Starting data normalization")
-        startTime = time.perf_counter()
+        print("Please wait while I normalize the data...", end = " ")
         mean = []
         std = []
 
@@ -62,13 +59,14 @@ class Classifier:
 
             for j in range(0, len(row)):
                 self.dataVals[i][j+1] = (row[j] - mean[j]) / std[j]
-
-        print("Data normalization took", time.perf_counter() - startTime, "seconds!\n")
+        print("Done!")
 
 
 
     def test(self, id, features = []): # returns the expected class of the id
         closest = [float('inf'), -1] # initalize closest point as class -1 with distance of infinity
+        closest2 = [float('inf'), -1]
+        closest3 = [float('inf'), -1]
 
         i = 0
         while i < len(self.dataVals):
@@ -98,15 +96,21 @@ class Classifier:
             eucDist = distance.euclidean(row, instance) 
 
             if eucDist < closest[0]:
+                closest3 = closest2
+                closest2 = closest
+
                 closest[0] = eucDist
                 closest[1] = self.dataVals[i][0]
 
             i += 1
         
-        return closest[1]
+        Class = closest[1]
+        if (closest2[1] == closest3[1]): # if the 2nd and 3rd nearest neighbors outvote the closest
+            Class = closest2[1]
+
+        return Class
     
     def prune(self):
-        print("Starting data pruning")
         startTime = time.perf_counter()
         n = len(self.dataVals)
 
@@ -122,7 +126,7 @@ class Classifier:
                     minDist[i] = min(eucDist, minDist.get(i, float('inf')))
 
         minDist = dict(sorted(minDist.items(), key=lambda x: x[1]))
-        pruneAmount = len(self.dataVals) // 2 # prune 2/3 of data points that are most useless
+        pruneAmount = len(self.dataVals) // 3 # prune 2/3 of data points that are most useless
         
         smallerData = {}
         keys = list(minDist.keys())
@@ -131,7 +135,6 @@ class Classifier:
             smallerData[i] = self.dataVals[keys[i]]
 
         self.dataVals = smallerData # replace dataVals with pruned data
-        print("Pruning took", time.perf_counter() - startTime, "seconds!\n")
     
 
 class Validator:
@@ -142,23 +145,23 @@ class Validator:
         self.classifier.prune()
 
     def evaluate(self, features = []):
-        print("Starting accuracy evaluation for feature set", features)
-        startTime = time.perf_counter()
-
         c = self.classifier
-        hits, misses = 0, 0
+        hits = 0
 
-        for i in range(0, len(c.dataVals)): # calculate accuracy using NN for each
-            if c.dataVals[i][0] == c.test(i, features):
-                hits += 1
-            else:
-                misses += 1
+        if (features == []): # defualt accuracy is num of the most common class / num of instances
+            classFreq = {}
+            for i in range(0, len(c.dataVals)): 
+                Class = c.dataVals[i][0]
+                classFreq[Class] = 1 + classFreq.get(Class, 0)
+                hits = max(hits, classFreq[Class])
+            
+        else:
+            for i in range(0, len(c.dataVals)): # calculate accuracy using NN for each
+                if c.dataVals[i][0] == c.test(i, features):
+                    hits += 1
 
-        print("Accuracy evaluation took", time.perf_counter() - startTime, "seconds!\n")
-        accuracy = hits / (hits + misses)
+        accuracy = hits / (len(c.dataVals)-1)
         return round(accuracy, 3)
-        
-
 
 
 
@@ -170,9 +173,9 @@ def test():
     for i in inp.split():
         features.append(int(i))
 
-    filename = input("Enter the filename of the dataset you would like to use: ")
+    # filename = input("Enter the filename of the dataset you would like to use: ")
     # v = Validator(filename)
-    v = Validator("Datasets/large-test-dataset.txt")
+    v = Validator("Datasets/CS170_Spring_2024_Large_data__19.txt")
 
     print("Accuracy for these features is", v.evaluate(features))
 
